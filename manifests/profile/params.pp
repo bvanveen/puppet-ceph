@@ -80,6 +80,9 @@
 #   Optional. Float e.g. 90, NOTE: ends in config as .90
 #   Default provided by Ceph.
 #
+# [*mon_osd_down_out_interval*] Time in seconds before osd is marked as down
+#   Optional. Integer in seconds default is 300
+#
 # [*cluster_network*] The address of the cluster network.
 #   Optional. {cluster-network-ip/netmask}
 #
@@ -210,6 +213,7 @@ class ceph::profile::params (
   $mds_key = undef,
   $mon_key = undef,
   $mon_keyring = undef,
+  $mon_osd_down_out_interval = undef,
   $client_keys = {},
   $osds = undef,
   $manage_repo = true,
