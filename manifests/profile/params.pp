@@ -38,6 +38,9 @@
 #   individually through ceph::mon.
 #   Optional. String like e.g. 'a, b, c'.
 #
+# [*mon_osd_down_out_interval*] Time in seconds before osd is marked as down
+#   Optional. Integer in seconds default is 300
+#
 # [*ms_bind_ipv6*] Enables Ceph daemons to bind to IPv6 addresses.
 #   Optional. Boolean. Default provided by Ceph.
 #
@@ -122,6 +125,7 @@ class ceph::profile::params (
   $authentication_type = undef,
   $mon_initial_members = undef,
   $mon_host = undef,
+  $mon_osd_down_out_interval = undef,
   $ms_bind_ipv6 = undef,
   $osd_journal_size = undef,
   $osd_pool_default_pg_num = undef,
