@@ -31,18 +31,19 @@ class ceph::profile::base {
   }
 
   class { '::ceph':
-    fsid                      => $ceph::profile::params::fsid,
-    authentication_type       => $ceph::profile::params::authentication_type,
-    osd_journal_size          => $ceph::profile::params::osd_journal_size,
-    osd_pool_default_pg_num   => $ceph::profile::params::osd_pool_default_pg_num,
-    osd_pool_default_pgp_num  => $ceph::profile::params::osd_pool_default_pgp_num,
-    osd_pool_default_size     => $ceph::profile::params::osd_pool_default_size,
-    osd_pool_default_min_size => $ceph::profile::params::osd_pool_default_min_size,
-    mon_initial_members       => $ceph::profile::params::mon_initial_members,
-    mon_host                  => $ceph::profile::params::mon_host,
-    mon_osd_down_out_interval => $ceph::profile::params::mon_osd_down_out_interval,
-    ms_bind_ipv6              => $ceph::profile::params::ms_bind_ipv6,
-    cluster_network           => $ceph::profile::params::cluster_network,
-    public_network            => $ceph::profile::params::public_network,
+    fsid                              => $ceph::profile::params::fsid,
+    authentication_type               => $ceph::profile::params::authentication_type,
+    osd_journal_size                  => $ceph::profile::params::osd_journal_size,
+    osd_pool_default_pg_num           => $ceph::profile::params::osd_pool_default_pg_num,
+    osd_pool_default_pgp_num          => $ceph::profile::params::osd_pool_default_pgp_num,
+    osd_pool_default_size             => $ceph::profile::params::osd_pool_default_size,
+    osd_pool_default_min_size         => $ceph::profile::params::osd_pool_default_min_size,
+    mon_initial_members               => $ceph::profile::params::mon_initial_members,
+    mon_host                          => $ceph::profile::params::mon_host,
+    mon_osd_down_out_interval         => $ceph::profile::params::mon_osd_down_out_interval,
+    mon_warn_on_legacy_crush_tunables => $ceph::profile::params::mon_warn_on_legacy_crush_tunables,
+    ms_bind_ipv6                      => $ceph::profile::params::ms_bind_ipv6,
+    cluster_network                   => $ceph::profile::params::cluster_network,
+    public_network                    => $ceph::profile::params::public_network,
   }
 }

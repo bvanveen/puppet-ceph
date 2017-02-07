@@ -74,6 +74,9 @@
 # [*mon_osd_down_out_interval*] Time in seconds before osd is marked as down
 #   Optional. Integer in seconds default is 300
 #
+# [*mon_warn_on_legacy_crush_tunables*] Disable warning when using legacy Tunables 
+#   Optional.
+#
 # [*ms_bind_ipv6*] Enables Ceph daemons to bind to IPv6 addresses.
 #   Optional. Boolean. Default provided by Ceph.
 #
@@ -103,28 +106,29 @@
 #
 class ceph (
   $fsid,
-  $ensure                     = present,
-  $authentication_type        = 'cephx',
-  $keyring                    = undef,
-  $osd_journal_size           = undef,
-  $osd_pool_default_pg_num    = undef,
-  $osd_pool_default_pgp_num   = undef,
-  $osd_pool_default_size      = undef,
-  $osd_pool_default_min_size  = undef,
-  $osd_pool_default_crush_rule= undef,
-  $mon_osd_full_ratio         = undef,
-  $mon_osd_nearfull_ratio     = undef,
-  $mon_initial_members        = undef,
-  $mon_host                   = undef,
-  $mon_osd_down_out_interval  = undef,
-  $ms_bind_ipv6               = undef,
-  $require_signatures         = undef,
-  $cluster_require_signatures = undef,
-  $service_require_signatures = undef,
-  $sign_messages              = undef,
-  $cluster_network            = undef,
-  $public_network             = undef,
-  $public_addr                = undef,
+  $ensure                            = present,
+  $authentication_type               = 'cephx',
+  $keyring                           = undef,
+  $osd_journal_size                  = undef,
+  $osd_pool_default_pg_num           = undef,
+  $osd_pool_default_pgp_num          = undef,
+  $osd_pool_default_size             = undef,
+  $osd_pool_default_min_size         = undef,
+  $osd_pool_default_crush_rule       = undef,
+  $mon_osd_full_ratio                = undef,
+  $mon_osd_nearfull_ratio            = undef,
+  $mon_initial_members               = undef,
+  $mon_host                          = undef,
+  $mon_osd_down_out_interval         = undef,
+  $mon_warn_on_legacy_crush_tunables = undef,
+  $ms_bind_ipv6                      = undef,
+  $require_signatures                = undef,
+  $cluster_require_signatures        = undef,
+  $service_require_signatures        = undef,
+  $sign_messages                     = undef,
+  $cluster_network                   = undef,
+  $public_network                    = undef,
+  $public_addr                       = undef,
 ) {
   include ::ceph::params
 
@@ -138,27 +142,28 @@ class ceph (
     Package<| tag == 'ceph' |> -> Ceph_config<| |>
     # [global]
     ceph_config {
-      'global/fsid':                        value => $fsid;
-      'global/keyring':                     value => $keyring;
-      'global/osd_pool_default_pg_num':     value => $osd_pool_default_pg_num;
-      'global/osd_pool_default_pgp_num':    value => $osd_pool_default_pgp_num;
-      'global/osd_pool_default_size':       value => $osd_pool_default_size;
-      'global/osd_pool_default_min_size':   value => $osd_pool_default_min_size;
-      'global/osd_pool_default_crush_rule': value => $osd_pool_default_crush_rule;
-      'global/mon_osd_full_ratio':          value => $mon_osd_full_ratio;
-      'global/mon_osd_nearfull_ratio':      value => $mon_osd_nearfull_ratio;
-      'global/mon_initial_members':         value => $mon_initial_members;
-      'global/mon_host':                    value => $mon_host;
-      'global/mon_osd_down_out_interval':    value => $mon_osd_down_out_interval;
-      'global/ms_bind_ipv6':                value => $ms_bind_ipv6;
-      'global/require_signatures':          value => $require_signatures;
-      'global/cluster_require_signatures':  value => $cluster_require_signatures;
-      'global/service_require_signatures':  value => $service_require_signatures;
-      'global/sign_messages':               value => $sign_messages;
-      'global/cluster_network':             value => $cluster_network;
-      'global/public_network':              value => $public_network;
-      'global/public_addr':                 value => $public_addr;
-      'osd/osd_journal_size':               value => $osd_journal_size;
+      'global/fsid':                               value => $fsid;
+      'global/keyring':                            value => $keyring;
+      'global/osd_pool_default_pg_num':            value => $osd_pool_default_pg_num;
+      'global/osd_pool_default_pgp_num':           value => $osd_pool_default_pgp_num;
+      'global/osd_pool_default_size':              value => $osd_pool_default_size;
+      'global/osd_pool_default_min_size':          value => $osd_pool_default_min_size;
+      'global/osd_pool_default_crush_rule':        value => $osd_pool_default_crush_rule;
+      'global/mon_osd_full_ratio':                 value => $mon_osd_full_ratio;
+      'global/mon_osd_nearfull_ratio':             value => $mon_osd_nearfull_ratio;
+      'global/mon_initial_members':                value => $mon_initial_members;
+      'global/mon_host':                           value => $mon_host;
+      'global/mon_osd_down_out_interval':          value => $mon_osd_down_out_interval;
+      'global/mon_warn_on_legacy_crush_tunables':  value=> $mon_warn_on_legacy_crush_tunables;
+      'global/ms_bind_ipv6':                       value => $ms_bind_ipv6;
+      'global/require_signatures':                 value => $require_signatures;
+      'global/cluster_require_signatures':         value => $cluster_require_signatures;
+      'global/service_require_signatures':         value => $service_require_signatures;
+      'global/sign_messages':                      value => $sign_messages;
+      'global/cluster_network':                    value => $cluster_network;
+      'global/public_network':                     value => $public_network;
+      'global/public_addr':                        value => $public_addr;
+      'osd/osd_journal_size':                      value => $osd_journal_size;
     }
 
     if $authentication_type == 'cephx' {

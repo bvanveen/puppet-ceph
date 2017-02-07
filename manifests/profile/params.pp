@@ -41,6 +41,9 @@
 # [*mon_osd_down_out_interval*] Time in seconds before osd is marked as down
 #   Optional. Integer in seconds default is 300
 #
+# [*mon_warn_on_legacy_crush_tunables*] Disable warning when using legacy Tunables
+#   Optional.
+#
 # [*ms_bind_ipv6*] Enables Ceph daemons to bind to IPv6 addresses.
 #   Optional. Boolean. Default provided by Ceph.
 #
@@ -126,6 +129,7 @@ class ceph::profile::params (
   $mon_initial_members = undef,
   $mon_host = undef,
   $mon_osd_down_out_interval = undef,
+  $mon_warn_on_legacy_crush_tunables = undef,
   $ms_bind_ipv6 = undef,
   $osd_journal_size = undef,
   $osd_pool_default_pg_num = undef,
