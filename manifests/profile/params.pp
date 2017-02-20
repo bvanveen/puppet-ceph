@@ -50,6 +50,12 @@
 # [*osd_journal_size*] The size of the journal file/device.
 #   Optional. Integer. Default provided by Ceph.
 #
+# [*osd_max_object_name_len*] The maximum length of a rados object name
+#   Optional. Integer. Default to undef.
+#
+# [*osd_max_object_namespace_len*] The maximum length of a rados object name
+#   Optional. Integer. Default to undef.
+#
 # [*osd_pool_default_pg_num*] The default number of PGs per pool.
 #   Optional. Integer. Default provided by Ceph.
 #
@@ -65,6 +71,10 @@
 # [*osd_pool_default_crush_rule*] The default CRUSH ruleset to use
 #   when creating a pool.
 #   Optional. Integer. Default provided by Ceph.
+#
+# [*osd_crush_update_on_start*] The default OSDs behaviour on start when
+#   it comes to registering their location in the CRUSH map.
+#   Optional. Boolean. Defaults to undef.
 #
 # [*mon_osd_full_ratio*] Percentage of disk space used before
 #   an OSD considered full
@@ -86,6 +96,9 @@
 #   Optional. The IPv(4|6) address on which MON binds itself.
 #   This is useful when not specifying public_network or when there is more than one IP address on
 #   the same network and you want to be specific about the IP to bind the MON on.
+#
+# [*mds_key*] The mds secret key.
+#   Optional but required when using cephx.
 #
 # [*mon_key*] The mon secret key.
 #   Optional. Either mon_key or mon_keyring need to be set when using cephx.
@@ -121,6 +134,66 @@
 # [*rgw_frontends*] Arguments to the rgw frontend
 #   Optional. Example: "civetweb port=7480"
 #
+# [*osd_max_backfills*] The maximum number of backfills allowed to or from a single OSD.
+#   Optional. Default provided by Ceph
+#
+# [*osd_recovery_max_active*] The number of active recovery requests per OSD at one time.
+#   Optional.  Default provided by Ceph
+#
+# [*osd_recovery_op_priority*] The priority set for recovery operations.
+#   Optional.  Default provided by Ceph
+#
+# [*osd_recovery_max_single_start*] The maximum number of recovery operations that will be
+#   newly started per PG that the OSD is recovering.
+#   Optional.  Default provided by Ceph
+#
+# [*osd_max_scrubs*] The maximum number of simultaneous scrub operations for a Ceph OSD Daemon.
+#   Optional.  Default provided by Ceph
+#
+# [*osd_op_threads*] The number of threads to service Ceph OSD Daemon operations.
+#   Set to 0 to disable it.
+#   Optional. Default provided by Ceph
+#
+# [*pid_max*] Value for pid_max. Defaults to undef. Optional.
+#   For OSD nodes it is recommended that you raise pid_max above the
+#   default value because you may hit the system max during
+#   recovery. The recommended value is the absolute max for pid_max: 4194303
+#   http://docs.ceph.com/docs/jewel/rados/troubleshooting/troubleshooting-osd/
+#
+# [*rgw_keystone_version*] The api version for keystone.
+#   Possible values 'v2.0', 'v3'
+#   Optional. Default is 'v2.0'
+#
+# [*rgw_keystone_admin_domain*] The name of OpenStack domain with admin
+#   privilege when using OpenStack Identity API v3
+#   Optional. Default is undef
+#
+# [*rgw_keystone_admin_project*] The name of OpenStack project with admin
+#   privilege when using OpenStack Identity API v3
+#   Optional. Default is undef
+#
+# [*rgw_keystone_admin_user*] The user name of OpenStack tenant with admin
+#   privilege (Service Tenant)
+#   Required if is 'v3'.
+#
+# [*rgw_keystone_admin_password*] The password for OpenStack admin user
+#   Required if is 'v3'.
+# 
+# [*rbd_mirror_client_name*] Name of the cephx client key used for rbd mirroring
+#   Optional. Default is undef
+#
+# [*fs_name*] The FS name.
+#   Optional but required when using fs.
+#
+# [*fs_metadata_pool*] The FS metadata pool name.
+#   Optional but required when using fs.
+#
+# [*fs_data_pool*] The FS data pool name.
+#   Optional but required when using fs.
+#
+# [*rbd_default_features*] Set RBD features configuration.
+#   Optional. String. Defaults to undef.
+# 
 
 class ceph::profile::params (
   $fsid = undef,
@@ -132,13 +205,17 @@ class ceph::profile::params (
   $mon_warn_on_legacy_crush_tunables = undef,
   $ms_bind_ipv6 = undef,
   $osd_journal_size = undef,
+  $osd_max_object_name_len = undef,
+  $osd_max_object_namespace_len = undef,
   $osd_pool_default_pg_num = undef,
   $osd_pool_default_pgp_num = undef,
   $osd_pool_default_size = undef,
   $osd_pool_default_min_size = undef,
+  $osd_crush_update_on_start = undef,
   $cluster_network = undef,
   $public_network = undef,
   $public_addr = undef,
+  $mds_key = undef,
   $mon_key = undef,
   $mon_keyring = undef,
   $client_keys = {},
@@ -149,6 +226,23 @@ class ceph::profile::params (
   $rgw_print_continue = undef,
   $frontend_type = undef,
   $rgw_frontends = undef,
+  $osd_max_backfills = undef,
+  $osd_recovery_max_active = undef,
+  $osd_recovery_op_priority = undef,
+  $osd_recovery_max_single_start = undef,
+  $osd_max_scrubs = undef,
+  $osd_op_threads = undef,
+  $pid_max = undef,
+  $rgw_keystone_version = 'v2.0',
+  $rgw_keystone_admin_domain = undef,
+  $rgw_keystone_admin_project = undef,
+  $rgw_keystone_admin_user = undef,
+  $rgw_keystone_admin_password = undef,
+  $rbd_mirror_client_name = undef,
+  $fs_metadata_pool = undef,
+  $fs_data_pool = undef,
+  $fs_name = undef,
+  $rbd_default_features = undef,
 ) {
   validate_hash($client_keys)
 

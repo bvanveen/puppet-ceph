@@ -1,5 +1,5 @@
 #
-#   Copyright (C) 2013 Cloudwatt <libre.licensing@cloudwatt.com>
+#  Copyright (C) 2016 Keith Schincke
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -13,20 +13,18 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-# Author: Loic Dachary <loic@dachary.org>
+# Author: Keith Schincke <keith.schincke@gmail.com>
 #
-# == Class: ceph::conf
+# == Class: ceph::profile::mirror
 #
-# Class wrapper for the benefit of scenario_node_terminus
+# Profile for Ceph rbd mirror
 #
-# === Parameters:
-#
-# [*args*] A Ceph config hash.
-#   Optional.
-#
-# [*defaults*] A config hash
-#   Optional. Defaults to a empty hash
-#
-class ceph::conf($args = {}, $defaults = {}) {
-  ensure_resources(ceph_config, $args, $defaults)
+class ceph::profile::mirror {
+  require ::ceph::profile::client
+  $rbd_name = $::ceph::profile::params::rbd_mirror_client_name ? {
+    undef   => 'openstack',
+    default => $::ceph::profile::params::rbd_mirror_client_name,
+  }
+  ceph::mirror { $rbd_name:
+  }
 }

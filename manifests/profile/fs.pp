@@ -1,5 +1,5 @@
 #
-#   Copyright (C) 2013 Cloudwatt <libre.licensing@cloudwatt.com>
+#   Copyright (C) 2016 Red Hat, Inc.
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -13,20 +13,17 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-# Author: Loic Dachary <loic@dachary.org>
+# Author: Jan Provaznik <jprovazn@redhat.com>
 #
-# == Class: ceph::conf
+# == Class: ceph::profile::fs
 #
-# Class wrapper for the benefit of scenario_node_terminus
+# Profile for a Ceph fs
 #
-# === Parameters:
-#
-# [*args*] A Ceph config hash.
-#   Optional.
-#
-# [*defaults*] A config hash
-#   Optional. Defaults to a empty hash
-#
-class ceph::conf($args = {}, $defaults = {}) {
-  ensure_resources(ceph_config, $args, $defaults)
+class ceph::profile::fs {
+  require ::ceph::profile::base
+
+  ceph::fs { $ceph::profile::params::fs_name:
+    metadata_pool => $ceph::profile::params::fs_metadata_pool,
+    data_pool     => $ceph::profile::params::fs_data_pool,
+  }
 }

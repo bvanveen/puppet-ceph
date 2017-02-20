@@ -41,32 +41,83 @@
 # [*exec_timeout*] The default exec resource timeout, in seconds
 #   Optional. Defaults to $::ceph::params::exec_timeout
 #
+# [*selinux_file_context*] The SELinux file context to apply
+#   on the directory backing the OSD service.
+#   Optional. Defaults to 'ceph_var_lib_t'
+#
+# [*fsid*] The ceph cluster FSID
+#   Optional. Defaults to $::ceph::profile::params::fsid
+#
 define ceph::osd (
   $ensure = present,
   $journal = undef,
   $cluster = undef,
   $exec_timeout = $::ceph::params::exec_timeout,
+  $selinux_file_context = 'ceph_var_lib_t',
+  $fsid = $::ceph::profile::params::fsid,
   ) {
+
+    include ::ceph::params
 
     $data = $name
 
     if $cluster {
-      $cluster_option = "--cluster ${cluster}"
       $cluster_name = $cluster
     } else {
       $cluster_name = 'ceph'
     }
+    $cluster_option = "--cluster ${cluster_name}"
 
     if $ensure == present {
 
       $ceph_check_udev = "ceph-osd-check-udev-${name}"
       $ceph_prepare = "ceph-osd-prepare-${name}"
       $ceph_activate = "ceph-osd-activate-${name}"
+      $ceph_zap_osd = "ceph-osd-zap-${name}"
 
       Package<| tag == 'ceph' |> -> Exec[$ceph_check_udev]
+      Exec[$ceph_zap_osd] -> Exec[$ceph_check_udev]
       Ceph_config<||> -> Exec[$ceph_prepare]
       Ceph::Mon<||> -> Exec[$ceph_prepare]
       Ceph::Key<||> -> Exec[$ceph_prepare]
+
+      if $journal {
+        $ceph_zap_journal = "ceph-osd-zap-${name}-${journal}"
+        Exec[$ceph_zap_osd] -> Exec[$ceph_zap_journal]
+        Exec[$ceph_zap_journal] -> Exec[$ceph_check_udev]
+        exec { $ceph_zap_journal:
+          command   => "/bin/true # comment to satisfy puppet syntax requirements
+set -ex
+if [ -b ${journal} ]; then
+  ceph-disk zap ${journal}
+fi
+",
+          unless    => "/bin/true # comment to satisfy puppet syntax requirements
+set -ex
+! test -b ${journal} ||
+test $(parted -ms ${journal} p 2>&1 | egrep -c 'Error.*unrecognised disk label') -eq 0
+",
+          logoutput => true,
+          timeout   => $exec_timeout,
+        }
+      }
+
+      exec { $ceph_zap_osd:
+        command   => "/bin/true # comment to satisfy puppet syntax requirements
+set -ex
+if [ -b ${data} ]; then
+  ceph-disk zap ${data}
+fi
+",
+        unless    => "/bin/true # comment to satisfy puppet syntax requirements
+set -ex
+! test -b ${data} ||
+test $(parted -ms ${data} p 2>&1 | egrep -c 'Error.*unrecognised disk label') -eq 0
+",
+        logoutput => true,
+        timeout   => $exec_timeout,
+      }
+
 
       $udev_rules_file = '/usr/lib/udev/rules.d/95-ceph-osd.rules'
       exec { $ceph_check_udev:
@@ -83,6 +134,26 @@ test -f ${udev_rules_file} && test \$DISABLE_UDEV -eq 1
         logoutput => true,
       }
 
+      if $fsid {
+        $fsid_option = "--cluster-uuid ${fsid}"
+        $ceph_check_fsid_mismatch = "ceph-osd-check-fsid-mismatch-${name}"
+        Exec[$ceph_check_udev] -> Exec[$ceph_check_fsid_mismatch]
+        Exec[$ceph_check_fsid_mismatch] -> Exec[$ceph_prepare]
+        # return error if ${data} has fsid differing from ${fsid}, unless there is no fsid
+        exec { $ceph_check_fsid_mismatch:
+          command   => "/bin/true # comment to satisfy puppet syntax requirements
+set -ex
+test ${fsid} = \$(ceph-disk list ${data} | egrep -o '[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}')
+",
+          unless    => "/bin/true # comment to satisfy puppet syntax requirements
+set -ex
+test -z \$(ceph-disk list ${data} | egrep -o '[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}')
+",
+          logoutput => true,
+          timeout   => $exec_timeout,
+        }
+      }
+
       Exec[$ceph_check_udev] -> Exec[$ceph_prepare]
       # ceph-disk: prepare should be idempotent http://tracker.ceph.com/issues/7475
       exec { $ceph_prepare:
@@ -94,7 +165,7 @@ if ! test -b ${data} ; then
         chown -h ceph:ceph ${data}
     fi
 fi
-ceph-disk prepare ${cluster_option} ${data} ${journal}
+ceph-disk prepare ${cluster_option} ${fsid_option} ${data} ${journal}
 udevadm settle
 ",
         unless    => "/bin/true # comment to satisfy puppet syntax requirements
@@ -104,6 +175,16 @@ ceph-disk list | grep -E ' *${data}1? .*ceph data, (prepared|active)' ||
 ",
         logoutput => true,
         timeout   => $exec_timeout,
+      }
+      if (str2bool($::selinux) == true) {
+        ensure_packages($::ceph::params::pkg_policycoreutils, {'ensure' => 'present'})
+        exec { "fcontext_${name}":
+          command => "semanage fcontext -a -t ${selinux_file_context} '${data}(/.*)?' && restorecon -R ${data}",
+          path    => ['/usr/sbin', '/sbin', '/usr/bin', '/bin'],
+          require => [Package[$::ceph::params::pkg_policycoreutils],Exec[$ceph_prepare]],
+          before  => Exec[$ceph_activate],
+          unless  => "test -b ${data} || (semanage fcontext -l | grep ${data})",
+        }
       }
 
       Exec[$ceph_prepare] -> Exec[$ceph_activate]
@@ -131,7 +212,7 @@ ls -ld /var/lib/ceph/osd/${cluster_name}-* | grep ' ${data}\$'
         logoutput => true,
       }
 
-    } else {
+    } elsif $ensure == absent {
 
       # ceph-disk: support osd removal http://tracker.ceph.com/issues/7454
       exec { "remove-osd-${name}":
@@ -172,6 +253,7 @@ fi
         logoutput => true,
         timeout   => $exec_timeout,
       } -> Ceph::Mon<| ensure == absent |>
+    } else {
+      fail('Ensure on OSD must be either present or absent')
     }
-
 }

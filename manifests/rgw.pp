@@ -64,9 +64,12 @@
 # [*rgw_frontends*] Arguments to the rgw frontend
 #   Optional. Default is 'fastcgi socket_port=9000 socket_host=127.0.0.1'. Example: "civetweb port=7480"
 #
+# Deprecated Parameters:
+#
 # [*syslog*] Whether or not to log to syslog.
 #   Optional. Default is true.
 #
+
 define ceph::rgw (
   $pkg_radosgw        = $::ceph::params::pkg_radosgw,
   $rgw_ensure         = 'running',
@@ -81,10 +84,15 @@ define ceph::rgw (
   $rgw_port           = undef,
   $frontend_type      = 'apache-fastcgi',
   $rgw_frontends      = 'fastcgi socket_port=9000 socket_host=127.0.0.1',
-  $syslog             = true,
+  $syslog             = undef,
 ) {
 
   include ::stdlib
+
+  if $syslog
+  {
+    warning( 'The syslog parameter is unused and deprecated. It will be removed in a future release.' )
+  }
 
   unless $name =~ /^radosgw\..+/ {
     fail("Define name must be started with 'radosgw.'")
@@ -135,22 +143,29 @@ define ceph::rgw (
 
   # Data directory for radosgw
   file { '/var/lib/ceph/radosgw': # missing in redhat pkg
-    ensure => directory,
-    mode   => '0755',
+    ensure                  => directory,
+    mode                    => '0755',
+    selinux_ignore_defaults => true,
   }
   file { $rgw_data:
-    ensure => directory,
-    owner  => 'root',
-    group  => 'root',
-    mode   => '0750',
+    ensure                  => directory,
+    owner                   => 'root',
+    group                   => 'root',
+    mode                    => '0750',
+    selinux_ignore_defaults => true,
   }
 
   # Log file for radosgw (ownership)
   file { $log_file:
-    ensure => present,
-    owner  => $user,
-    mode   => '0640',
+    ensure                  => present,
+    owner                   => $user,
+    mode                    => '0640',
+    selinux_ignore_defaults => true,
   }
+
+  # NOTE(aschultz): this is the radowsgw service title, it may be different
+  # than the actual service name
+  $rgw_service = "radosgw-${name}"
 
   # service definition
   # if Ubuntu does not use systemd
@@ -158,7 +173,7 @@ define ceph::rgw (
     if $rgw_enable {
       file { "${rgw_data}/done":
         ensure => present,
-        before => Service["radosgw-${name}"],
+        before => Service[$rgw_service],
       }
     }
 
@@ -171,39 +186,23 @@ define ceph::rgw (
     }
   # Everything else that is supported by puppet-ceph should run systemd.
   } else {
-    if $rgw_enable {
-      file { "${rgw_data}/sysvinit":
-        ensure => present,
-        before => Service["radosgw-${name}"],
-      }
-    }
-
     Service {
-      name     => "radosgw-${name}",
-      start    => 'service radosgw start',
-      stop     => 'service radosgw stop',
-      status   => 'service radosgw status',
-      provider => $::ceph::params::service_provider,
+      name   => "ceph-radosgw@${name}",
+      enable => $rgw_enable,
     }
   }
 
-  #for RHEL/CentOS7, systemctl needs to reload to pickup the ceph-radosgw init file
-  if (($::operatingsystem == 'RedHat' or $::operatingsystem == 'CentOS') and (versioncmp($::operatingsystemmajrelease, '7') >= 0))
-  {
-    exec { 'systemctl-reload-from-rgw': #needed for the new init file
-      command => '/usr/bin/systemctl daemon-reload',
-    }
-  }
-  service { "radosgw-${name}":
+  service { $rgw_service:
     ensure => $rgw_ensure,
+    tag    => ['ceph-radosgw']
   }
 
-  Ceph_config<||> -> Service["radosgw-${name}"]
+  Ceph_config<||> ~> Service<| tag == 'ceph-radosgw' |>
   Package<| tag == 'ceph' |> -> File['/var/lib/ceph/radosgw']
   Package<| tag == 'ceph' |> -> File[$log_file]
   File['/var/lib/ceph/radosgw']
   -> File[$rgw_data]
-  -> Service["radosgw-${name}"]
-  File[$log_file] -> Service["radosgw-${name}"]
-  Ceph::Pool<||> -> Service["radosgw-${name}"]
+  -> Service<| tag == 'ceph-radosgw' |>
+  File[$log_file] -> Service<| tag == 'ceph-radosgw' |>
+  Ceph::Pool<||> -> Service<| tag == 'ceph-radosgw' |>
 }

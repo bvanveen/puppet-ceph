@@ -56,6 +56,9 @@
 #   https://wiki.centos.org/SpecialInterestGroup/Storage/
 #   Optional. Defaults to False in ceph::params.
 #
+# [*ceph_mirror*] Ceph mirror used to download packages.
+#   Optional. Defaults to undef.
+#
 class ceph::repo (
   $ensure         = present,
   $release        = $::ceph::params::release,
@@ -65,22 +68,28 @@ class ceph::repo (
   $proxy_password = undef,
   $enable_epel    = true,
   $enable_sig     = $::ceph::params::enable_sig,
+  $ceph_mirror    = undef,
 ) inherits ceph::params {
   case $::osfamily {
     'Debian': {
       include ::apt
 
-      apt::key { 'ceph':
-        ensure => $ensure,
-        id     => '08B73419AC32B4E966C1A330E84AC2C0460F3994',
-        source => 'https://download.ceph.com/keys/release.asc',
+      if $ceph_mirror {
+        $ceph_mirror_real = $ceph_mirror
+      } else {
+        $ceph_mirror_real = "http://download.ceph.com/debian-${release}/"
+        apt::key { 'ceph':
+          ensure => $ensure,
+          id     => '08B73419AC32B4E966C1A330E84AC2C0460F3994',
+          source => 'https://download.ceph.com/keys/release.asc',
+          before => Apt::Source['ceph'],
+        }
       }
 
       apt::source { 'ceph':
         ensure   => $ensure,
-        location => "http://download.ceph.com/debian-${release}/",
+        location => $ceph_mirror_real,
         release  => $::lsbdistcodename,
-        require  => Apt::Key['ceph'],
         tag      => 'ceph',
       }
 
@@ -112,7 +121,8 @@ class ceph::repo (
       # https://wiki.centos.org/SpecialInterestGroup/Storage/
       if $enable_sig {
         if $::operatingsystem != 'CentOS' {
-          warning("CentOS SIG repository is only supported on CentOS operating system, not on ${::operatingsystem}, which can lead to packaging issues.")
+          warning("CentOS SIG repository is only supported on CentOS operating system, \
+not on ${::operatingsystem}, which can lead to packaging issues.")
         }
         yumrepo { 'ceph-jewel-sig':
           enabled    => '1',
@@ -125,7 +135,8 @@ class ceph::repo (
         Yumrepo['ceph-jewel-sig'] -> Package<| tag == 'ceph' |>
       } else {
         # If you want to deploy Ceph using packages provided by ceph.com repositories.
-        if ((($::operatingsystem == 'RedHat' or $::operatingsystem == 'CentOS') and (versioncmp($::operatingsystemmajrelease, '7') < 0)) or ($::operatingsystem == 'Fedora' and (versioncmp($::operatingsystemmajrelease, '19') < 0))) {
+        if ((($::operatingsystem == 'RedHat' or $::operatingsystem == 'CentOS') and (versioncmp($::operatingsystemmajrelease, '7') < 0))
+              or ($::operatingsystem == 'Fedora' and (versioncmp($::operatingsystemmajrelease, '19') < 0))) {
           $el = '6'
         } else {
           $el = '7'
@@ -217,7 +228,8 @@ class ceph::repo (
     }
 
     default: {
-      fail("Unsupported osfamily: ${::osfamily} operatingsystem: ${::operatingsystem}, module ${module_name} only supports osfamily Debian and RedHat")
+      fail("Unsupported osfamily: ${::osfamily} operatingsystem: ${::operatingsystem}, \
+module ${module_name} only supports osfamily Debian and RedHat")
     }
   }
 }

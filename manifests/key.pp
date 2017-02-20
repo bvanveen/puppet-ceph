@@ -87,17 +87,27 @@ define ceph::key (
 
   if $cluster {
     $cluster_option = "--cluster ${cluster}"
+  } else
+  {
+    $cluster_option = ''
   }
 
   if $cap_mon {
     $mon_caps = "--cap mon '${cap_mon}' "
+  } else {
+    $mon_caps = ''
   }
   if $cap_osd {
     $osd_caps = "--cap osd '${cap_osd}' "
+  } else {
+    $osd_caps = ''
   }
   if $cap_mds {
     $mds_caps = "--cap mds '${cap_mds}' "
+  } else {
+    $mds_caps = ''
   }
+
   $caps = "${mon_caps}${osd_caps}${mds_caps}"
 
   # this allows multiple defines for the same 'keyring file',
@@ -109,18 +119,24 @@ define ceph::key (
       group                   => $group,
       mode                    => $mode,
       selinux_ignore_defaults => true,
-      require                 => Package['ceph'],
+      require                 => Package[$::ceph::params::packages],
     }
   }
 
+  # ceph-authtool --add-key is idempotent, will just update pre-existing keys
   exec { "ceph-key-${name}":
     command   => "/bin/true # comment to satisfy puppet syntax requirements
 set -ex
 ceph-authtool ${keyring_path} --name '${name}' --add-key '${secret}' ${caps}",
     unless    => "/bin/true # comment to satisfy puppet syntax requirements
-set -ex
-sed -n 'N;\\%.*${name}.*\\n\\s*key = ${secret}%p' ${keyring_path} | grep ${name}",
-    require   => [ Package['ceph'], File[$keyring_path], ],
+set -x
+NEW_KEYRING=\$(mktemp)
+ceph-authtool \$NEW_KEYRING --name '${name}' --add-key '${secret}' ${caps}
+diff -N \$NEW_KEYRING ${keyring_path}
+rv=\$?
+rm \$NEW_KEYRING
+exit \$rv",
+    require   => [ File[$keyring_path], ],
     logoutput => true,
   }
 
@@ -129,21 +145,33 @@ sed -n 'N;\\%.*${name}.*\\n\\s*key = ${secret}%p' ${keyring_path} | grep ${name}
     if $inject_as_id {
       $inject_id_option = " --name '${inject_as_id}' "
     }
+    else {
+      $inject_id_option = ''
+    }
 
     if $inject_keyring {
       $inject_keyring_option = " --keyring '${inject_keyring}' "
     }
+    else {
+      $inject_keyring_option = ''
+    }
 
     Ceph_config<||> -> Exec["ceph-injectkey-${name}"]
     Ceph::Mon<||> -> Exec["ceph-injectkey-${name}"]
+    # ceph auth import is idempotent, will just update pre-existing keys
     exec { "ceph-injectkey-${name}":
       command   => "/bin/true # comment to satisfy puppet syntax requirements
 set -ex
-ceph ${cluster_option} ${inject_id_option} ${inject_keyring_option} auth add ${name} --in-file=${keyring_path}",
+ceph ${cluster_option} ${inject_id_option} ${inject_keyring_option} auth import -i ${keyring_path}",
       unless    => "/bin/true # comment to satisfy puppet syntax requirements
-set -ex
-ceph ${cluster_option} ${inject_id_option} ${inject_keyring_option} auth get ${name} | grep ${secret}",
-      require   => [ Package['ceph'], Exec["ceph-key-${name}"], ],
+set -x
+OLD_KEYRING=\$(mktemp)
+ceph ${cluster_option} ${inject_id_option} ${inject_keyring_option} auth get ${name} -o \$OLD_KEYRING || true
+diff -N \$OLD_KEYRING ${keyring_path}
+rv=$?
+rm \$OLD_KEYRING
+exit \$rv",
+      require   => [ Class['ceph'], Exec["ceph-key-${name}"], ],
       logoutput => true,
     }
 

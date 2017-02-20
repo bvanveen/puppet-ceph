@@ -1,5 +1,5 @@
 #
-#   Copyright (C) 2013 Cloudwatt <libre.licensing@cloudwatt.com>
+#  Copyright (C) 2016 Red Hat, Inc.
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -13,20 +13,27 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-# Author: Loic Dachary <loic@dachary.org>
-#
-# == Class: ceph::conf
-#
-# Class wrapper for the benefit of scenario_node_terminus
-#
-# === Parameters:
-#
-# [*args*] A Ceph config hash.
-#   Optional.
-#
-# [*defaults*] A config hash
-#   Optional. Defaults to a empty hash
-#
-class ceph::conf($args = {}, $defaults = {}) {
-  ensure_resources(ceph_config, $args, $defaults)
-}
+require 'spec_helper'
+
+describe 'ceph::profile::fs' do
+
+  shared_examples_for 'ceph profile fs' do
+
+    it { is_expected.to contain_ceph__fs('fs_name').with(
+      'metadata_pool' => 'metadata_pool',
+      'data_pool' => 'data_pool'
+    )}
+  end
+
+  on_supported_os({
+    :supported_os => OSDefaults.get_supported_os
+  }).each do |os,facts|
+    context "on #{os}" do
+      let (:facts) do
+        facts.merge!(OSDefaults.get_facts({:hostname => 'myhostname'}))
+      end
+
+      it_behaves_like 'ceph profile fs'
+    end
+  end
+end

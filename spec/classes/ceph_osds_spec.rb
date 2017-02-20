@@ -39,46 +39,37 @@ describe 'ceph::osds' do
       is_expected.to contain_ceph__osd('/dev/sdb').with(
         :ensure  => 'present',
         :journal => '/srv/journal',
-        :cluster => 'CLUSTER'
-    )
+        :cluster => 'CLUSTER')
       is_expected.to contain_ceph__osd('/srv/data').with(
         :ensure  => 'present',
         :cluster => 'CLUSTER')
+      is_expected.not_to contain_sysctl__value('kernel.pid_max')
     }
   end
 
-  describe 'Ubuntu' do
-    let :facts do
-      {
-        :osfamily => 'Debian',
-        :operatingsystem => 'Ubuntu',
-      }
+  context 'sets pid_max when enabled' do
+    let :params do
+    {
+      :pid_max => 123456,
+    }
     end
-
-    it_configures 'ceph osds'
+    it do
+      is_expected.to contain_sysctl__value('kernel.pid_max').with_value(123456)
+    end
   end
 
-  describe 'Debian' do
-    let :facts do
-      {
-        :osfamily => 'Debian',
-        :operatingsystem => 'Debian',
-      }
-    end
+  on_supported_os({
+    :supported_os => OSDefaults.get_supported_os
+  }).each do |os,facts|
+    context "on #{os}" do
+      let (:facts) do
+        facts.merge!(OSDefaults.get_facts())
+      end
 
-    it_configures 'ceph osds'
+      it_behaves_like 'ceph osds'
+    end
   end
 
-  describe 'RedHat' do
-    let :facts do
-      {
-        :osfamily => 'RedHat',
-        :operatingsystem => 'RedHat',
-      }
-    end
-
-    it_configures 'ceph osds'
-  end
 end
 
 # Local Variables:
