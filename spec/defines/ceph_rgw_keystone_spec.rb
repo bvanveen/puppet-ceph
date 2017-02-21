@@ -32,6 +32,7 @@ describe 'ceph::rgw::keystone' do
         :osfamily               => 'Debian',
         :operatingsystem        => 'Ubuntu',
         :operatingsystemrelease => '14.04',
+        :lsbdistrelease         => '14.04',
       }
     end
 
@@ -140,7 +141,46 @@ wget --no-check-certificate http://keystone.custom:5000/v2.0/certificates/signin
          'user'    => 'www-data',
       ) }
 
-    end  end
+    end
+
+    describe "create with keystone v3 and no pki params" do
+
+      let :pre_condition do
+        "
+          include ceph::params
+          class { 'ceph': fsid => 'd5252e7d-75bc-4083-85ed-fe51fa83f62b' }
+          class { 'ceph::repo': fastcgi => true, }
+          include ceph
+          ceph::rgw { 'radosgw.gateway': }
+          ceph::rgw::apache_fastcgi { 'radosgw.gateway': }
+        "
+      end
+
+      let :title do
+        'radosgw.gateway'
+      end
+
+      let :params do
+        {
+          :rgw_keystone_url            => 'http://keystone.default:5000',
+          :rgw_keystone_version        => 'v3',
+          :rgw_keystone_admin_domain   => 'default',
+          :rgw_keystone_admin_project  => 'openstack',
+          :rgw_keystone_admin_user     => 'rgwuser',
+          :rgw_keystone_admin_password => '123456',
+        }
+      end
+
+      it { is_expected.to contain_ceph_config('client.radosgw.gateway/rgw_keystone_url').with_value('http://keystone.default:5000') }
+      it { is_expected.to contain_ceph_config('client.radosgw.gateway/rgw_keystone_admin_domain').with_value('default') }
+      it { is_expected.to contain_ceph_config('client.radosgw.gateway/rgw_keystone_admin_project').with_value('openstack') }
+      it { is_expected.to contain_ceph_config('client.radosgw.gateway/rgw_keystone_admin_user').with_value('rgwuser') }
+      it { is_expected.to contain_ceph_config('client.radosgw.gateway/rgw_keystone_admin_password').with_value('123456') }
+      it { is_expected.to contain_ceph_config('client.radosgw.gateway/rgw_keystone_admin_token').with_ensure('absent') }
+
+    end
+
+  end
 
   describe 'RedHat Family' do
 
@@ -262,12 +302,45 @@ wget --no-check-certificate http://keystone.custom:5000/v2.0/certificates/signin
          'user'    => 'apache',
       ) }
 
-    end  end
-end
+    end
 
-# Local Variables:
-# compile-command: "cd ../.. ;
-#    bundle install ;
-#    bundle exec rake spec
-# "
-# End:
+    describe "create with keystone v3 and no pki params" do
+
+      let :pre_condition do
+        "
+          include ceph::params
+          class { 'ceph': fsid => 'd5252e7d-75bc-4083-85ed-fe51fa83f62b' }
+          class { 'ceph::repo': fastcgi => true, }
+          include ceph
+          ceph::rgw { 'radosgw.gateway': }
+          ceph::rgw::apache_fastcgi { 'radosgw.gateway': }
+        "
+      end
+
+      let :title do
+        'radosgw.gateway'
+      end
+
+      let :params do
+        {
+          :rgw_keystone_url            => 'http://keystone.default:5000',
+          :rgw_keystone_version        => 'v3',
+          :rgw_keystone_admin_domain   => 'default',
+          :rgw_keystone_admin_project  => 'openstack',
+          :rgw_keystone_admin_user     => 'rgwuser',
+          :rgw_keystone_admin_password => '123456',
+        }
+      end
+
+      it { is_expected.to contain_ceph_config('client.radosgw.gateway/rgw_keystone_url').with_value('http://keystone.default:5000') }
+      it { is_expected.to contain_ceph_config('client.radosgw.gateway/rgw_keystone_admin_domain').with_value('default') }
+      it { is_expected.to contain_ceph_config('client.radosgw.gateway/rgw_keystone_admin_project').with_value('openstack') }
+      it { is_expected.to contain_ceph_config('client.radosgw.gateway/rgw_keystone_admin_user').with_value('rgwuser') }
+      it { is_expected.to contain_ceph_config('client.radosgw.gateway/rgw_keystone_admin_password').with_value('123456') }
+      it { is_expected.to contain_ceph_config('client.radosgw.gateway/rgw_keystone_admin_token').with_ensure('absent') }
+
+    end
+
+
+  end
+end

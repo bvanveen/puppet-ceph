@@ -34,6 +34,8 @@ class ceph::profile::base {
     fsid                              => $ceph::profile::params::fsid,
     authentication_type               => $ceph::profile::params::authentication_type,
     osd_journal_size                  => $ceph::profile::params::osd_journal_size,
+    osd_max_object_name_len           => $ceph::profile::params::osd_max_object_name_len,
+    osd_max_object_namespace_len      => $ceph::profile::params::osd_max_object_namespace_len,
     osd_pool_default_pg_num           => $ceph::profile::params::osd_pool_default_pg_num,
     osd_pool_default_pgp_num          => $ceph::profile::params::osd_pool_default_pgp_num,
     osd_pool_default_size             => $ceph::profile::params::osd_pool_default_size,
@@ -45,5 +47,11 @@ class ceph::profile::base {
     ms_bind_ipv6                      => $ceph::profile::params::ms_bind_ipv6,
     cluster_network                   => $ceph::profile::params::cluster_network,
     public_network                    => $ceph::profile::params::public_network,
+    osd_max_backfills                 => $ceph::profile::params::osd_max_backfills,
+    osd_recovery_max_active           => $ceph::profile::params::osd_recovery_max_active,
+    osd_recovery_op_priority          => $ceph::profile::params::osd_recovery_op_priority,
+    osd_recovery_max_single_start     => $ceph::profile::params::osd_recovery_max_single_start,
+    osd_max_scrubs                    => $ceph::profile::params::osd_max_scrubs,
+    osd_op_threads                    => $ceph::profile::params::osd_op_threads,
   }
 }

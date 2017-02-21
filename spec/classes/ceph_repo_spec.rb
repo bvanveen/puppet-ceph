@@ -28,6 +28,7 @@ describe 'ceph::repo' do
       :osfamily        => 'Debian',
       :lsbdistid       => 'Debian',
       :lsbdistcodename => 'jessie',
+      :lsbdistrelease  => '8',
     }
     end
 
@@ -44,6 +45,20 @@ describe 'ceph::repo' do
         :require  => 'Apt::Key[ceph]'
       ) }
 
+    end
+
+    describe "when overriding ceph mirror" do
+      let :params do
+        {
+         :ceph_mirror => 'http://myserver.com/debian-jewel/'
+        }
+      end
+
+      it { is_expected.to contain_apt__source('ceph').with(
+        :location => 'http://myserver.com/debian-jewel/',
+        :release  => 'jessie',
+        :require  => 'Apt::Key[ceph]'
+      ) }
     end
 
     describe "when overriding ceph release" do
@@ -69,6 +84,7 @@ describe 'ceph::repo' do
       :osfamily        => 'Debian',
       :lsbdistid       => 'Ubuntu',
       :lsbdistcodename => 'trusty',
+      :lsbdistrelease  => '14.04',
       :hardwaremodel   => 'x86_64',
     }
     end
