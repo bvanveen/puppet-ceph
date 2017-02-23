@@ -54,7 +54,7 @@ class ceph::params (
       $user_radosgw        = 'www-data'
       $pkg_fastcgi         = 'libapache2-mod-fastcgi'
       $pkg_nsstools        = 'libnss3-tools'
-      $service_provider    = 'upstart'
+      $service_provider    = 'sysvinit'
       $pkg_policycoreutils = 'policycoreutils'
     }
 

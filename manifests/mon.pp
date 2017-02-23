@@ -88,19 +88,31 @@ define ceph::mon (
     if $::service_provider == 'upstart' {
       $init = 'upstart'
       Service {
-        name     => "ceph-mon-${id}",
+        name     => $mon_service,
         provider => $::ceph::params::service_provider,
         start    => "start ceph-mon id=${id}",
         stop     => "stop ceph-mon id=${id}",
         status   => "status ceph-mon id=${id}",
-        enable   => $mon_enable,
       }
-    # Everything else that is supported by puppet-ceph should run systemd.
-    } else {
+    }
+    elsif $::service_provider == 'systemd' {
       $init = 'systemd'
       Service {
-        name   => "ceph-mon@${id}",
-        enable => $mon_enable,
+        name     => $mon_service,
+        provider => $::ceph::params::service_provider,
+        start    => "systemctl start ceph-mon@${id}",
+        stop     => "systemctl stop ceph-mon@${id}",
+        status   => "systemctl status ceph-mon@${id}",
+      }
+    # For Red Hat systems (not supporting Jewel now, only Hammer)
+    } else {
+      $init = 'sysvinit'
+      Service {
+        name     => $mon_service,
+        provider => $::ceph::params::service_provider,
+        start    => "service ceph start mon.${id}",
+        stop     => "service ceph stop mon.${id}",
+        status   => "service ceph status mon.${id}",
       }
     }
 
