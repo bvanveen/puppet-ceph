@@ -85,7 +85,7 @@ define ceph::mon (
     $mon_service = "ceph-mon-${id}"
 
     # For Ubuntu Trusty system
-    if $::ceph::params::service_provider == 'debian' {
+    if $::service_provider == 'upstart' {
       $init = 'upstart'
       Service {
         name     => $mon_service,
@@ -102,6 +102,15 @@ define ceph::mon (
         provider => $::ceph::params::service_provider,
       }
     # For Red Hat systems (not supporting Jewel now, only Hammer)
+    } else {
+      $init = 'sysvinit'
+      Service {
+        name     => $mon_service,
+        provider => $::ceph::params::service_provider,
+        start    => "service ceph start mon.${id}",
+        stop     => "service ceph stop mon.${id}",
+        status   => "service ceph status mon.${id}",
+      }
     }
 
     if $ensure == present {
@@ -127,7 +136,6 @@ cat > ${keyring_path} << EOF
     key = ${key}
     caps mon = \"allow *\"
 EOF
-
 chmod 0444 ${keyring_path}
 ",
             unless  => "/bin/true # comment to satisfy puppet syntax requirements
@@ -252,3 +260,4 @@ test ! -d \$mon_data
       fail('Ensure on MON must be either present or absent')
     }
   }
+  
