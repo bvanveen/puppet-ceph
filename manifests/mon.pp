@@ -85,7 +85,7 @@ define ceph::mon (
     $mon_service = "ceph-mon-${id}"
 
     # For Ubuntu Trusty system
-    if $::service_provider == 'upstart' {
+    if $::ceph::params::service_provider == 'debian' {
       $init = 'upstart'
       Service {
         name     => $mon_service,
@@ -95,25 +95,13 @@ define ceph::mon (
         status   => "status ceph-mon id=${id}",
       }
     }
-    elsif $::service_provider == 'systemd' {
+    elsif $::ceph::params::service_provider == 'systemd' {
       $init = 'systemd'
       Service {
-        name     => $mon_service,
+        name     => "ceph-mon@${id}",
         provider => $::ceph::params::service_provider,
-        start    => "systemctl start ceph-mon@${id}",
-        stop     => "systemctl stop ceph-mon@${id}",
-        status   => "systemctl status ceph-mon@${id}",
       }
     # For Red Hat systems (not supporting Jewel now, only Hammer)
-    } else {
-      $init = 'sysvinit'
-      Service {
-        name     => $mon_service,
-        provider => $::ceph::params::service_provider,
-        start    => "service ceph start mon.${id}",
-        stop     => "service ceph stop mon.${id}",
-        status   => "service ceph status mon.${id}",
-      }
     }
 
     if $ensure == present {
