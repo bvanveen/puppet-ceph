@@ -95,14 +95,11 @@ define ceph::mon (
         status   => "status ceph-mon id=${id}",
       }
     }
-    elsif $::service_provider == 'systemd' {
+    elsif $::ceph::params::service_provider == 'systemd' {
       $init = 'systemd'
       Service {
-        name     => $mon_service,
+        name     => "ceph-mon@${id}",
         provider => $::ceph::params::service_provider,
-        start    => "systemctl start ceph-mon@${id}",
-        stop     => "systemctl stop ceph-mon@${id}",
-        status   => "systemctl status ceph-mon@${id}",
       }
     # For Red Hat systems (not supporting Jewel now, only Hammer)
     } else {
@@ -139,7 +136,6 @@ cat > ${keyring_path} << EOF
     key = ${key}
     caps mon = \"allow *\"
 EOF
-
 chmod 0444 ${keyring_path}
 ",
             unless  => "/bin/true # comment to satisfy puppet syntax requirements
@@ -264,3 +260,4 @@ test ! -d \$mon_data
       fail('Ensure on MON must be either present or absent')
     }
   }
+  
