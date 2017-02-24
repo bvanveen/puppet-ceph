@@ -108,11 +108,8 @@ define ceph::mon (
     } else {
       $init = 'sysvinit'
       Service {
-        name     => $mon_service,
+        name     => "ceph-mon@${id}",
         provider => $::ceph::params::service_provider,
-        start    => "service ceph start mon.${id}",
-        stop     => "service ceph stop mon.${id}",
-        status   => "service ceph status mon.${id}",
       }
     }
 
