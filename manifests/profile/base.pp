@@ -42,6 +42,7 @@ class ceph::profile::base {
     osd_pool_default_min_size         => $ceph::profile::params::osd_pool_default_min_size,
     mon_initial_members               => $ceph::profile::params::mon_initial_members,
     mon_host                          => $ceph::profile::params::mon_host,
+    mon_data                          => $ceph::profile::params::mon_data,
     mon_osd_down_out_interval         => $ceph::profile::params::mon_osd_down_out_interval,
     mon_warn_on_legacy_crush_tunables => $ceph::profile::params::mon_warn_on_legacy_crush_tunables,
     ms_bind_ipv6                      => $ceph::profile::params::ms_bind_ipv6,

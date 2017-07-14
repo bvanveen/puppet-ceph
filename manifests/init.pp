@@ -84,7 +84,10 @@
 # [*mon_osd_down_out_interval*] Time in seconds before osd is marked as down
 #   Optional. Integer in seconds default is 300
 #
-# [*mon_warn_on_legacy_crush_tunables*] Disable warning when using legacy Tunables 
+# [*mon_data*] Path where to save monitor data
+#   Optional. String default /var/lib/ceph/mon
+#
+# [*mon_warn_on_legacy_crush_tunables*] Disable warning when using legacy Tunables
 #   Optional.
 #
 # [*ms_bind_ipv6*] Enables Ceph daemons to bind to IPv6 addresses.
@@ -161,6 +164,7 @@ class ceph (
   $mon_host                          = undef,
   $mon_osd_down_out_interval         = undef,
   $mon_warn_on_legacy_crush_tunables = undef,
+  $mon_data                          = undef,
   $ms_bind_ipv6                      = undef,
   $require_signatures                = undef,
   $cluster_require_signatures        = undef,
