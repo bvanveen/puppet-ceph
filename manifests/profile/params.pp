@@ -44,6 +44,9 @@
 # [*mon_warn_on_legacy_crush_tunables*] Disable warning when using legacy Tunables
 #   Optional.
 #
+# [*mon_data*] Path where to save monitor data
+#   Optional. String default /var/lib/ceph/mon
+#
 # [*ms_bind_ipv6*] Enables Ceph daemons to bind to IPv6 addresses.
 #   Optional. Boolean. Default provided by Ceph.
 #
@@ -179,6 +182,7 @@ class ceph::profile::params (
   $mon_host = undef,
   $mon_osd_down_out_interval = undef,
   $mon_warn_on_legacy_crush_tunables = undef,
+  $mon_data = undef,
   $ms_bind_ipv6 = undef,
   $osd_journal_size = undef,
   $osd_max_object_name_len = undef,
