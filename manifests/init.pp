@@ -212,6 +212,7 @@ this module to assign values and will be removed in a future release.')
       'global/mon_initial_members':                value => $mon_initial_members;
       'global/mon_host':                           value => $mon_host;
       'global/mon_osd_down_out_interval':          value => $mon_osd_down_out_interval;
+      'global/mon_data':                           value => $mon_data;
       'mon/mon_warn_on_legacy_crush_tunables':     value => $mon_warn_on_legacy_crush_tunables;
       'global/ms_bind_ipv6':                       value => $ms_bind_ipv6;
       'global/require_signatures':                 value => $require_signatures;
